@@ -10,25 +10,25 @@ mp_drawing = mp.solutions.drawing_utils
 # Initialize the Hands model
 hands = mp_hands.Hands(
     static_image_mode=False,
-    max_num_hands=2,  # Track one hand at a time
+    max_num_hands=2,
     min_detection_confidence=0.7,
     min_tracking_confidence=0.7,
 )
 
-# Create a directory to save gesture data
+# Create directories to save gesture and image data
 gesture_data_dir = "gesture_data"
+image_data_dir = "gesture_images"
 os.makedirs(gesture_data_dir, exist_ok=True)
+os.makedirs(image_data_dir, exist_ok=True)
 
 # Function to save gesture data to CSV
 def save_gesture_data(gesture_name, landmarks):
     file_path = os.path.join(gesture_data_dir, f"{gesture_name}.csv")
     file_exists = os.path.exists(file_path)
 
-    # Append mode to continue adding records
     with open(file_path, mode="a", newline="") as file:
         writer = csv.writer(file)
         if not file_exists:
-            # Write header if the file doesn't exist
             header = [f"landmark_{i}_{axis}" for i in range(21) for axis in ["x", "y", "z"]]
             writer.writerow(header)
         writer.writerow(landmarks)
@@ -43,39 +43,37 @@ if not camera.isOpened():
 print("Press 'q' to exit the program.")
 
 gesture_name = input("Enter the name of the gesture: ").strip()
-target_records = 1000  # Number of records needed per gesture
+
+# Create a folder for the gesture images
+gesture_image_folder = os.path.join(image_data_dir, gesture_name)
+os.makedirs(gesture_image_folder, exist_ok=True)
+
+target_records = 500
 saved_count = 0
 
 # Check if any existing records already exist for this gesture
 csv_file_path = os.path.join(gesture_data_dir, f"{gesture_name}.csv")
 if os.path.exists(csv_file_path):
     with open(csv_file_path, "r") as file:
-        saved_count = sum(1 for _ in file) - 1  # Subtract header row
+        saved_count = sum(1 for _ in file) - 1  # subtract header row
 
 print(f"Starting collection for gesture: {gesture_name}")
 print(f"Records already saved: {saved_count}/{target_records}")
 
 while saved_count < target_records:
-    # Capture a single frame
     ret, frame = camera.read()
 
     if not ret:
         print("Error: Failed to capture frame.")
         break
 
-    # Flip the frame for a mirror effect
     frame = cv2.flip(frame, 1)
-
-    # Convert the frame to RGB (MediaPipe requires RGB)
     rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-    # Process the frame to detect hands
     results = hands.process(rgb_frame)
 
-    # If a hand is detected, display skeleton and extract landmarks
     if results.multi_hand_landmarks:
         for hand_landmarks in results.multi_hand_landmarks:
-            # Draw the skeleton on the frame
             mp_drawing.draw_landmarks(
                 frame,
                 hand_landmarks,
@@ -84,21 +82,23 @@ while saved_count < target_records:
                 mp_drawing.DrawingSpec(color=(255, 0, 0), thickness=2),
             )
 
-            # Extract landmarks (x, y, z for each point)
             landmarks = []
             for lm in hand_landmarks.landmark:
-                landmarks.extend([lm.x, lm.y, lm.z])  # Append x, y, z
+                landmarks.extend([lm.x, lm.y, lm.z])
 
-            # Save landmarks
             save_gesture_data(gesture_name, landmarks)
+
+            # Save the associated image data to the gesture specific folder
+            image_filename = f"{gesture_name}_{saved_count+1}.png"
+            image_path = os.path.join(gesture_image_folder, image_filename)
+            cv2.imwrite(image_path, frame)
+
             saved_count += 1
             print(f"Saved {saved_count}/{target_records} records for gesture: {gesture_name}")
 
-    # Display the frame
     cv2.imshow("Hand Gesture Recording", frame)
 
-    # Break the loop if 'q' is pressed
-    if cv2.waitKey(1) & 0xFF == ord('q'):
+    if cv2.waitKey(1) & 0xFF == ord("q"):
         print("Exiting...")
         break
 
@@ -107,6 +107,5 @@ if saved_count >= target_records:
 else:
     print(f"Collection incomplete: {saved_count}/{target_records} records saved.")
 
-# Release the camera and close all OpenCV windows
 camera.release()
 cv2.destroyAllWindows()
