@@ -33,7 +33,7 @@ This project implements a hand gesture detection system using PyTorch and MediaP
 
 ### Clone the Repository
 ```bash
-git clone https://github.com/yourusername/Hand-Gesture-Detection.git
+git clone https://github.com/TitanNatesan/Hand-Gesture-Detection.git
 cd Hand-Gesture-Detection
 ```
 
@@ -46,9 +46,9 @@ pip install -r requirements.txt
 
 ### Data Collection
 1. **Start Data Collection:**
-                ```bash
-                python create.py
-                ```
+      ```bash
+        python create.py
+      ```
 2. **Follow the Prompts:**
                 - Enter the name of the gesture you want to record.
                 - Hold up the gesture in front of your webcam.
@@ -56,17 +56,17 @@ pip install -r requirements.txt
 
 ### Model Training
 1. **Train the Model:**
-                ```bash
-                python train.py
-                ```
+      ```bash
+        python train.py
+      ```
 2. **Training Details:**
                 - The script will preprocess the data, train the neural network, and save the best model based on validation accuracy.
 
 ### Real-Time Recognition
 1. **Run the Recognition Script:**
-                ```bash
-                python run.py
-                ```
+      ```bash
+        python run.py
+      ```
 2. **Using the Application:**
                 - The webcam will activate.
                 - Perform a gesture in front of the camera.
